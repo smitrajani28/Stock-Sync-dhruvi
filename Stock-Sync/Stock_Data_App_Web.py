@@ -1,66 +1,74 @@
-#!/usr/bin/env python
-# coding: utf-8
-
+# Stock_Data_App_Web.py
 import streamlit as st
-import pandas as pd
-import os
-import subprocess
 import io
+import pandas as pd
+from Stock_Data_App import run_pipeline
+import os
 
-# --- Configuration ---
-BASE_DIR = os.getcwd()
-PLAYGROUND_DIR = os.path.join(BASE_DIR, "playground")
-FINAL_FILE = os.path.join(PLAYGROUND_DIR, "Cleaned_Final_Data.xlsx")
-
-# --- Streamlit UI Setup ---
 st.set_page_config(page_title="📊 Stock Data Merger Tool", layout="wide")
-
 st.title("📈 Stock Data Merger & Viewer (Web Version)")
 st.caption("Run your full data processing pipeline directly from your browser!")
 
-# --- Run Button ---
+# Define path to existing processed file ONCE here ✅
+base_dir = os.path.dirname(os.path.abspath(__file__))
+play = os.path.join(base_dir, "playground", "Cleaned_Final_Data.xlsx")
+
+# placeholders
+status = st.empty()
+df_area = st.empty()
+
+# ▶ Run Pipeline Button
 if st.button("▶ Run Full Data Merge"):
-    with st.spinner("Running Stock_Data_App.py..."):
-        try:
-            subprocess.run(["python", "Stock_Data_App.py"], check=True)
-            st.success("✅ Stock_Data_App.py completed successfully!")
-        except subprocess.CalledProcessError as e:
-            st.error(f"❌ Error running Stock_Data_App.py: {e}")
-        except Exception as e:
-            st.error(f"⚠️ Unexpected error: {e}")
-
-# --- Display Section ---
-st.subheader("📊 Latest Processed Stock Data")
-
-if os.path.exists(FINAL_FILE):
     try:
-        df = pd.read_excel(FINAL_FILE)
-        if not df.empty:
-            st.success(f"✅ Loaded {len(df)} records from {os.path.basename(FINAL_FILE)}")
+        status.info("Running pipeline...")
+        df, output_xlsx = run_pipeline()
 
-            # --- Show 6 random samples ---
-            # --- Show Full Data ---
-            st.dataframe(df.head(), use_container_width=True)
+        if df is None or df.empty:
+            status.warning("Pipeline finished but returned no data.")
+        else:
+            # COMPANY First Column
+            cols = list(df.columns)
+            if "COMPANY" in cols:
+                df = df[["COMPANY"] + [c for c in cols if c != "COMPANY"]]
 
-            # --- Prepare Excel file for download ---
+            status.success(f"✅ Pipeline completed — {len(df)} rows.")
+
+            # Show 4 random rows
+            sample_df = df.sample(4) if len(df) >= 4 else df
+            df_area.dataframe(sample_df, width="stretch")
+
+            # Download Button
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 df.to_excel(writer, index=False)
             buffer.seek(0)
 
-            # --- Download Button ---
             st.download_button(
                 label="⬇️ Download Final Excel",
                 data=buffer,
-                file_name="Cleaned_Final_Data.xlsx",
+                file_name=os.path.basename(output_xlsx) if output_xlsx else "Cleaned_Final_Data.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-        else:
-            st.warning("⚠️ The cleaned data file is empty. Please rerun the process.")
-    except Exception as e:
-        st.error(f"❌ Failed to read Excel file: {e}")
-else:
-    st.info("ℹ️ No merged data found yet. Click the button above to generate it.")
 
-st.markdown("---")
-st.caption("Made with ❤️ by Dhruvi | Stock Data Processing Suite")
+    except Exception as e:
+        status.error(f"❌ Error: {e}")
+
+# If not running pipeline, load existing file
+else:
+    if os.path.exists(play):
+        try:
+            df0 = pd.read_excel(play)
+
+            # COMPANY first
+            if "COMPANY" in df0.columns:
+                df0 = df0[["COMPANY"] + [c for c in df0.columns if c != "COMPANY"]]
+
+            # Show 4 random rows
+            sample_df = df0.sample(4) if len(df0) >= 4 else df0
+            df_area.dataframe(sample_df, width="stretch")
+
+            status.info(f"Loaded existing file: {os.path.basename(play)} ({len(df0)} rows)")
+        except Exception as e:
+            status.warning(f"⚠️ Could not load existing file: {e}")
+    else:
+        status.info("No processed file found — press Run to create it.")
