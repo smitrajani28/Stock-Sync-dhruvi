@@ -5,17 +5,23 @@ import pandas as pd
 from Stock_Data_App import run_pipeline
 import os
 
-# import os
-# import streamlit as st
+import subprocess
+import sys
 
-st.write("### Debug Info")
-st.write("Current working directory:", os.getcwd())
-st.write("Script directory:", os.path.dirname(os.path.abspath(__file__)))
-st.write("Files in current directory:", os.listdir())
-st.write("Files in script directory:", os.listdir(os.path.dirname(os.path.abspath(__file__))))
-st.write("Subfolders in repo:")
-for root, dirs, files in os.walk(os.path.dirname(os.path.abspath(__file__))):
-    st.write(root, "->", dirs, files)
+# Path to requirements.txt (auto-detect if in same folder)
+req_file = os.path.join(os.path.dirname(__file__), "requirements.txt")
+
+if os.path.exists(req_file):
+    try:
+        # Try installing required packages
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req_file])
+        print("✅ All required packages installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ Failed to install requirements: {e}")
+else:
+    print("⚠️ requirements.txt not found, skipping package installation.")
+
+
 
 
 
@@ -25,7 +31,7 @@ st.caption("Run your full data processing pipeline directly from your browser!")
 
 # Define path to existing processed file ONCE here ✅
 base_dir = os.path.dirname(os.path.abspath(__file__))
-play = os.path.join(base_dir, "playground", "Cleaned_Final_Data.xlsx")
+play = os.path.join(base_dir, "Stock-Sync/playground", "Cleaned_Final_Data.xlsx")
 
 # placeholders
 status = st.empty()
