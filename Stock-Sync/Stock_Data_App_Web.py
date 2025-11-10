@@ -5,6 +5,20 @@ import pandas as pd
 from Stock_Data_App import run_pipeline
 import os
 
+# import os
+# import streamlit as st
+
+st.write("### Debug Info")
+st.write("Current working directory:", os.getcwd())
+st.write("Script directory:", os.path.dirname(os.path.abspath(__file__)))
+st.write("Files in current directory:", os.listdir())
+st.write("Files in script directory:", os.listdir(os.path.dirname(os.path.abspath(__file__))))
+st.write("Subfolders in repo:")
+for root, dirs, files in os.walk(os.path.dirname(os.path.abspath(__file__))):
+    st.write(root, "->", dirs, files)
+
+
+
 st.set_page_config(page_title="📊 Stock Data Merger Tool", layout="wide")
 st.title("📈 Stock Data Merger & Viewer (Web Version)")
 st.caption("Run your full data processing pipeline directly from your browser!")
@@ -35,7 +49,7 @@ if st.button("▶ Run Full Data Merge"):
 
             # Show 4 random rows
             sample_df = df.sample(4) if len(df) >= 4 else df
-            df_area.dataframe(sample_df, width="stretch")
+            df_area.dataframe(sample_df)
 
             # Download Button
             buffer = io.BytesIO()
@@ -65,7 +79,7 @@ else:
 
             # Show 4 random rows
             sample_df = df0.sample(4) if len(df0) >= 4 else df0
-            df_area.dataframe(sample_df, width="stretch")
+            df_area.dataframe(sample_df)
 
             status.info(f"Loaded existing file: {os.path.basename(play)} ({len(df0)} rows)")
         except Exception as e:
