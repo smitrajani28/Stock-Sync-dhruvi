@@ -5,26 +5,6 @@ import pandas as pd
 from Stock_Data_App import run_pipeline
 import os
 
-import subprocess
-import sys
-
-# Path to requirements.txt (auto-detect if in same folder)
-req_file = os.path.join(os.path.dirname(__file__), "requirements.txt")
-
-if os.path.exists(req_file):
-    try:
-        # Try installing required packages
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req_file])
-        print("✅ All required packages installed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"⚠️ Failed to install requirements: {e}")
-else:
-    print("⚠️ requirements.txt not found, skipping package installation.")
-
-
-
-
-
 st.set_page_config(page_title="📊 Stock Data Merger Tool", layout="wide")
 st.title("📈 Stock Data Merger & Viewer (Web Version)")
 st.caption("Run your full data processing pipeline directly from your browser!")
